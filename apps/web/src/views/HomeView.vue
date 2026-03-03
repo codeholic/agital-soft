@@ -21,27 +21,22 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRoute } from 'vue-router';
 import { useQuery } from '@vue/apollo-composable';
 import { gql } from '@apollo/client/core';
 import ProductCard from '../components/ProductCard.vue';
 
-const route = useRoute();
-const inStock = computed(() => route.query.inStock === 'true');
-const filter = computed(() => inStock.value ? { inStock: { eq: true } } : undefined);
-
 const HOME_QUERY = gql`
-  query HomeProducts($filter: ProductFilterInput) {
-    newest: products(first: 10, sort: [{ createdAt: DESC }], filter: $filter) {
+  query HomeProducts {
+    newest: products(first: 10, sort: [{ createdAt: DESC }]) {
       edges { node { id name version price listPrice inStock images { url alt } rating { averageRating reviewCount } } }
     }
-    topRated: products(first: 10, sort: [{ averageRating: DESC }], filter: $filter) {
+    topRated: products(first: 10, sort: [{ averageRating: DESC }]) {
       edges { node { id name version price listPrice inStock images { url alt } rating { averageRating reviewCount } } }
     }
   }
 `;
 
-const { result, loading, error } = useQuery(HOME_QUERY, () => ({ filter: filter.value }));
+const { result, loading, error } = useQuery(HOME_QUERY);
 
 const newestEdges = computed(() => result.value?.newest?.edges ?? []);
 const topRatedEdges = computed(() => result.value?.topRated?.edges ?? []);

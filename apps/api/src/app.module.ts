@@ -6,6 +6,7 @@ import { MongoDriver } from '@mikro-orm/mongodb';
 import { join } from 'path';
 import { ProductModule } from './product/product.module';
 import { AuthModule } from './auth/auth.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       sortSchema: true,
+      context: ({ req }: { req: any }) => ({ req }),
     }),
     MikroOrmModule.forRoot({
       driver: MongoDriver,
@@ -23,6 +25,7 @@ import { AuthModule } from './auth/auth.module';
     }),
     ProductModule,
     AuthModule,
+    ReviewModule,
   ],
 })
 export class AppModule {}

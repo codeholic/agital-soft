@@ -38,8 +38,8 @@
           <!-- Details -->
           <div class="md:w-1/2 p-6 flex flex-col gap-4">
             <div>
-              <p class="text-sm text-gray-500">{{ product.version }}</p>
-              <h1 class="text-2xl font-bold text-gray-900 mt-1">{{ product.name }}</h1>
+              <h1 class="text-2xl font-bold text-gray-900">{{ product.name }}</h1>
+              <p class="text-sm text-gray-500 mt-1">{{ product.version }}</p>
             </div>
 
             <div class="flex items-center gap-3">
@@ -47,8 +47,20 @@
                 :rating="product.rating?.averageRating ?? 0"
                 :count="product.rating?.reviewCount ?? 0"
               />
-              <span class="text-sm text-gray-500">
-                {{ product.rating?.averageRating?.toFixed(1) }} von 5
+            </div>
+
+            <div>
+              <span
+                v-if="product.inStock"
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
+              >
+                Verfügbar
+              </span>
+              <span
+                v-else
+                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800"
+              >
+                Nicht vorrätig
               </span>
             </div>
 
@@ -59,23 +71,11 @@
               </span>
             </div>
 
-            <div>
-              <span
-                v-if="product.inStock"
-                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
-              >
-                Auf Lager
-              </span>
-              <span
-                v-else
-                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800"
-              >
-                Nicht vorrätig
-              </span>
-            </div>
-
             <button
-              class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
+              class="w-full font-semibold py-3 px-6 rounded-lg"
+              :class="product.inStock
+                ? 'bg-indigo-600 hover:bg-indigo-700 text-white transition-colors'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
               :disabled="!product.inStock"
             >
               In den Warenkorb
@@ -94,6 +94,28 @@
             <p class="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
               {{ product.longDescription }}
             </p>
+          </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="p-6 border-t border-gray-100">
+          <h2 class="font-semibold text-gray-900 mb-4">Bewertungen</h2>
+
+          <div v-if="reviewsLoading" class="text-gray-500 text-sm">Wird geladen...</div>
+          <div v-else-if="!reviews.length" class="text-gray-400 text-sm">Keine Bewertungen vorhanden.</div>
+          <div v-else class="flex flex-col gap-4">
+            <div
+              v-for="review in reviews"
+              :key="review.id"
+              class="bg-gray-50 rounded-lg p-4 flex flex-col gap-1"
+            >
+              <div class="flex items-center justify-between">
+                <span class="font-medium text-gray-900 text-sm">{{ review.name }}</span>
+                <span class="text-gray-400 text-xs">{{ formatDate(review.createdAt) }}</span>
+              </div>
+              <StarRating :rating="review.stars" />
+              <p class="text-gray-600 text-sm mt-1">{{ review.text }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -121,16 +143,37 @@ const PRODUCT_DETAIL = gql`
       listPrice
       inStock
       images { url alt }
-      rating { averageRating reviewCount totalStars }
+      rating { averageRating reviewCount }
+    }
+  }
+`;
+
+const REVIEWS_QUERY = gql`
+  query Reviews($productId: ID!) {
+    reviews(productId: $productId) {
+      id
+      name
+      stars
+      text
+      createdAt
     }
   }
 `;
 
 const { result, loading } = useQuery(PRODUCT_DETAIL, () => ({ id: props.id }));
-
 const product = computed(() => result.value?.product);
+
+const { result: reviewsResult, loading: reviewsLoading } = useQuery(
+  REVIEWS_QUERY,
+  () => ({ productId: props.id }),
+);
+const reviews = computed(() => reviewsResult.value?.reviews ?? []);
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(price);
+}
+
+function formatDate(iso: string): string {
+  return new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso));
 }
 </script>

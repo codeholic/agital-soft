@@ -21,7 +21,7 @@ export class AuthService {
     const hash = createHash('sha512').update(user.passwordSalt + password).digest('hex');
     if (hash !== user.passwordSha512) return null;
 
-    const token = this.jwtService.sign({ sub: user.id, email: user.email });
+    const token = this.jwtService.sign({ sub: user.id, email: user.email, name: user.name });
     return { token, user };
   }
 }
