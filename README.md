@@ -21,7 +21,6 @@ docker-compose up -d
 
 This starts:
 - **MongoDB** on `localhost:27017`
-- **MinIO** (S3-compatible storage) on `localhost:9000` (API) and `localhost:9001` (web UI)
 
 ## Start applications
 
@@ -41,13 +40,19 @@ pnpm run dev:web
 
 ## URLs
 
-| Service       | URL                            |
-|---------------|-------------------------------|
-| Web           | http://localhost:5173          |
-| GraphQL       | http://localhost:3000/graphql  |
-| MinIO console | http://localhost:9001          |
+| Service | URL                           |
+|---------|-------------------------------|
+| Web     | http://localhost:5173         |
+| GraphQL | http://localhost:3000/graphql |
 
-MinIO credentials: `minioadmin` / `minioadmin`
+## Seed data
+
+Load 100 sample products into the database (requires infrastructure to be running):
+
+```bash
+cd apps/api
+pnpm run seed
+```
 
 ## Stop infrastructure
 

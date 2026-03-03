@@ -4,7 +4,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { MongoDriver } from '@mikro-orm/mongodb';
 import { join } from 'path';
-import { AppResolver } from './app.resolver';
+import { ProductModule } from './product/product.module';
 
 @Module({
   imports: [
@@ -20,7 +20,7 @@ import { AppResolver } from './app.resolver';
       entities: ['./dist/**/*.entity.js'],
       entitiesTs: ['./src/**/*.entity.ts'],
     }),
+    ProductModule,
   ],
-  providers: [AppResolver],
 })
 export class AppModule {}

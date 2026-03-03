@@ -1,0 +1,45 @@
+query ProductDetail($id: ID!) {
+  product(id: $id) {
+    id
+    name
+    version
+    shortDescription
+    longDescription
+    price
+    listPrice
+    inStock
+    images {
+      url
+      alt
+    }
+    rating {
+      averageRating
+      reviewCount
+      totalStars
+    }
+  }
+}
+
+query SearchProducts($search: String!) {
+  products(first: 20, filter: { search: $search }) {
+    edges {
+      node {
+        id
+        name
+        version
+        price
+        listPrice
+        inStock
+        images {
+          url
+          alt
+        }
+        rating {
+          averageRating
+          reviewCount
+        }
+      }
+    }
+    totalCount
+  }
+}

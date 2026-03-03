@@ -1,0 +1,33 @@
+fragment ProductCard on Product {
+  id
+  name
+  version
+  price
+  listPrice
+  inStock
+  images {
+    url
+    alt
+  }
+  rating {
+    averageRating
+    reviewCount
+  }
+}
+
+query HomeProducts {
+  newest: products(first: 10, sort: [{ createdAt: DESC }]) {
+    edges {
+      node {
+        ...ProductCard
+      }
+    }
+  }
+  topRated: products(first: 10, sort: [{ averageRating: DESC }]) {
+    edges {
+      node {
+        ...ProductCard
+      }
+    }
+  }
+}

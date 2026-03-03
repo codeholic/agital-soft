@@ -5,6 +5,7 @@
     "dev:api": "pnpm --filter @agital-soft/api dev",
     "dev:web": "pnpm --filter @agital-soft/web dev",
     "build:api": "pnpm --filter @agital-soft/api build",
-    "build:web": "pnpm --filter @agital-soft/web build"
+    "build:web": "pnpm --filter @agital-soft/web build",
+    "seed": "pnpm --filter @agital-soft/api seed"
   }
 }
