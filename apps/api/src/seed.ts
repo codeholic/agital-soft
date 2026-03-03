@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import 'dotenv/config';
 import { createHash, randomBytes } from 'node:crypto';
 import { MikroORM } from '@mikro-orm/core';
 import { MongoDriver } from '@mikro-orm/mongodb';
@@ -174,7 +175,7 @@ function hashPassword(password: string): { passwordSalt: string; passwordSha512:
 async function seed() {
   const orm = await MikroORM.init({
     driver: MongoDriver,
-    clientUrl: process.env.MONGODB_URL ?? 'mongodb://root:password@localhost:27017/agitalsoft?authSource=admin',
+    clientUrl: process.env.MONGODB_URL,
     dbName: 'agitalsoft',
     entities: [Product, ProductImage, ProductRating, User, Review],
   });

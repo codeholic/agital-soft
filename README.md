@@ -38,6 +38,12 @@ nvm use 20
 pnpm run dev:web
 ```
 
+## Stop infrastructure
+
+```bash
+docker-compose down
+```
+
 ## URLs
 
 | Service | URL                           |
@@ -64,8 +70,22 @@ pnpm run seed
 | Maria Müller    | maria@agital.online      | pass4    |
 | Thomas Fischer  | thomas@agital.online     | pass5    |
 
-## Stop infrastructure
+## Deployment (Railway + MongoDB Atlas)
 
-```bash
-docker-compose down
-```
+1. Create a free MongoDB cluster at [mongodb.com/atlas](https://mongodb.com/atlas) and copy the connection string.
+2. Create a new project at [railway.app](https://railway.app) → **Deploy from GitHub repo**.
+3. Set environment variables in Railway:
+
+   | Variable      | Value                                      |
+   |---------------|--------------------------------------------|
+   | `MONGODB_URL` | connection string from Atlas               |
+   | `JWT_SECRET`  | any random string                          |
+
+4. Railway will build and deploy using the `Dockerfile` automatically.
+5. After the first deploy, run the seed script once via the [Railway CLI](https://docs.railway.com/guides/cli):
+   ```bash
+   npm install -g @railway/cli
+   railway login
+   railway link
+   railway run node apps/api/dist/seed
+   ```

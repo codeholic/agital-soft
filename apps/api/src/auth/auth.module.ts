@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { JwtModule } from '@nestjs/jwt';
 import { User } from '../user/entities/user.entity';
@@ -8,9 +9,12 @@ import { AuthResolver } from './auth.resolver';
 @Module({
   imports: [
     MikroOrmModule.forFeature([User]),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'dev-secret-change-in-production',
-      signOptions: { expiresIn: '7d' },
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.getOrThrow<string>('JWT_SECRET'),
+        signOptions: { expiresIn: '7d' },
+      }),
     }),
   ],
   providers: [AuthService, AuthResolver],
