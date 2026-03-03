@@ -161,6 +161,12 @@ async function seed() {
   await em.persistAndFlush(products);
   console.log(`Seeded ${products.length} products.`);
 
+  await collection.createIndex(
+    { name: 'text', shortDescription: 'text', longDescription: 'text' },
+    { weights: { name: 3, shortDescription: 2, longDescription: 1 }, name: 'product_text_idx' },
+  );
+  console.log('Created text index.');
+
   const userCollection = em.getDriver().getConnection().getCollection<User>('user');
   await userCollection.deleteMany({});
 

@@ -45,6 +45,9 @@ export class ProductService
     }
 
     const orderBy: Record<string, any> = {};
+    if (args.filter?.search) {
+      orderBy['score'] = { $meta: 'textScore' };
+    }
     for (const sortItem of args.sort ?? []) {
       if (sortItem.createdAt) orderBy['createdAt'] = sortItem.createdAt;
       if (sortItem.price) orderBy['price'] = sortItem.price;

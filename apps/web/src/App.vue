@@ -13,6 +13,15 @@
             class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
           />
         </form>
+        <label class="flex items-center gap-2 text-sm text-gray-600 shrink-0 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            :checked="inStock"
+            @change="toggleInStock"
+            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          Verfügbar
+        </label>
         <div class="ml-auto shrink-0">
           <LoginDropdown />
         </div>
@@ -25,18 +34,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import LoginDropdown from './components/LoginDropdown.vue';
 
 const router = useRouter();
+const route = useRoute();
 const searchQuery = ref('');
 
-function submitSearch() {
-  if (searchQuery.value.trim()) {
-    router.push({ path: '/', query: { q: searchQuery.value.trim() } });
+const inStock = computed(() => route.query.inStock === 'true');
+
+function toggleInStock(e: Event) {
+  const checked = (e.target as HTMLInputElement).checked;
+  const query = { ...route.query };
+  if (checked) {
+    query.inStock = 'true';
   } else {
-    router.push('/');
+    delete query.inStock;
   }
+  delete query.page;
+  router.replace({ query });
+}
+
+function submitSearch() {
+  const query: Record<string, string> = {};
+  if (searchQuery.value.trim()) query.q = searchQuery.value.trim();
+  if (inStock.value) query.inStock = 'true';
+  router.push({ path: '/search', query });
 }
 </script>
