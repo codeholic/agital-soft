@@ -1,58 +1,70 @@
 import 'reflect-metadata';
+import { createHash, randomBytes } from 'node:crypto';
 import { MikroORM } from '@mikro-orm/core';
 import { MongoDriver } from '@mikro-orm/mongodb';
 import { Product } from './product/entities/product.entity';
 import { ProductImage } from './product/entities/product-image.embeddable';
 import { ProductRating } from './product/entities/product-rating.embeddable';
+import { User } from './user/entities/user.entity';
 
 const CATEGORIES = [
   {
     tag: 'security',
+    color: 'fecaca/7f1d1d',
     names: ['SecureShield', 'CipherGuard', 'SafeNet', 'DataGuard', 'FireWall Pro', 'VPN Shield', 'PasswordVault', 'AntiThreat', 'CloudProtect', 'ThreatDetector'],
     keywords: ['security', 'protect', 'encrypt', 'safe', 'threat', 'guard'],
   },
   {
     tag: 'office',
+    color: 'bfdbfe/1e3a8a',
     names: ['DocMaster', 'SpreadPro', 'PresentStudio', 'NoteSync', 'TaskManager', 'OfficeHub', 'FormBuilder', 'ReportMaster', 'CalendarSync', 'ProjectPilot'],
     keywords: ['office', 'document', 'productivity', 'collaborate', 'workspace'],
   },
   {
     tag: 'dev',
+    color: 'bbf7d0/14532d',
     names: ['CodeStudio', 'DebugMaster', 'BuildPipeline', 'GitManager', 'APITester', 'CodeReview', 'DeployBot', 'TestRunner', 'LogAnalyzer', 'SchemaDesigner'],
     keywords: ['code', 'develop', 'debug', 'deploy', 'build', 'test'],
   },
   {
     tag: 'cloud',
+    color: 'bae6fd/0c4a6e',
     names: ['CloudSync', 'BackupMaster', 'StorageManager', 'FileSync', 'DataVault', 'CloudBackup', 'SyncHub', 'RestorePoint', 'CloudDrive', 'ArchiveManager'],
     keywords: ['cloud', 'sync', 'backup', 'store', 'restore', 'data'],
   },
   {
     tag: 'creative',
+    color: 'e9d5ff/4c1d95',
     names: ['PhotoStudio', 'VideoMaster', 'AudioEdit', 'DesignHub', 'VectorDraw', 'MediaManager', 'AnimationStudio', 'ScreenRecorder', 'FontManager', 'ColorPalette'],
     keywords: ['creative', 'design', 'photo', 'video', 'media', 'art'],
   },
   {
     tag: 'system',
+    color: 'e5e7eb/111827',
     names: ['SystemOptimizer', 'DiskCleaner', 'MemoryBooster', 'ProcessMonitor', 'DiskRecovery', 'DriverManager', 'StartupManager', 'BatteryOptimizer', 'HardwareMonitor', 'SystemCleaner'],
     keywords: ['system', 'optimize', 'clean', 'monitor', 'performance', 'speed'],
   },
   {
     tag: 'communication',
+    color: '99f6e4/134e4a',
     names: ['MailManager', 'TeamChat', 'VideoConference', 'VoiceConnect', 'ContactManager', 'MeetingHub', 'NotifyManager', 'BroadcastStudio', 'SecureChat', 'GroupConnect'],
     keywords: ['communicate', 'message', 'call', 'team', 'collaborate', 'conference'],
   },
   {
     tag: 'database',
+    color: 'fed7aa/7c2d12',
     names: ['SQLManager', 'NoSQLBrowser', 'DataMigrator', 'QueryBuilder', 'DatabaseMonitor', 'DataAnalyzer', 'BackupSQL', 'ETLManager', 'DataVisualizer', 'SchemaSync'],
     keywords: ['database', 'query', 'data', 'analyze', 'migrate', 'schema'],
   },
   {
     tag: 'network',
+    color: 'c7d2fe/1e1b4b',
     names: ['NetworkMonitor', 'TrafficAnalyzer', 'BandwidthManager', 'DNSManager', 'NetworkScanner', 'WiFiManager', 'ProxyManager', 'LoadBalancer', 'NetworkMapper', 'RemoteConnect'],
     keywords: ['network', 'connect', 'traffic', 'bandwidth', 'monitor', 'remote'],
   },
   {
     tag: 'business',
+    color: 'fef08a/713f12',
     names: ['InvoiceMaster', 'ExpenseManager', 'InventoryManager', 'CRMStudio', 'HRManager', 'PayrollPro', 'ContractManager', 'BudgetTracker', 'ReportingHub', 'ERPManager'],
     keywords: ['business', 'manage', 'track', 'report', 'enterprise', 'workflow'],
   },
@@ -88,7 +100,7 @@ function buildProduct(categoryIndex: number, nameIndex: number): Partial<Product
   const listPrice = hasDiscount ? Math.round(price * 1.3 * 100) / 100 : undefined;
 
   const image: ProductImage = Object.assign(new ProductImage(), {
-    url: `https://placehold.co/800x600?text=${encodeURIComponent(baseName)}`,
+    url: `https://placehold.co/800x600/${cat.color}?text=${encodeURIComponent(baseName)}`,
     alt: `Screenshot of ${baseName} ${edition}`,
   });
 
@@ -110,12 +122,26 @@ function buildProduct(categoryIndex: number, nameIndex: number): Partial<Product
   return product;
 }
 
+const USERS = [
+  { name: 'Max Mustermann',  birthDate: '1980-01-15', email: 'max@agital.online',   password: 'pass1' },
+  { name: 'Anna Schmidt',    birthDate: '1992-06-23', email: 'anna@agital.online',  password: 'pass2' },
+  { name: 'Klaus Weber',     birthDate: '1975-11-08', email: 'klaus@agital.online', password: 'pass3' },
+  { name: 'Maria Müller',    birthDate: '1988-03-30', email: 'maria@agital.online', password: 'pass4' },
+  { name: 'Thomas Fischer',  birthDate: '1995-09-12', email: 'thomas@agital.online',password: 'pass5' },
+];
+
+function hashPassword(password: string): { passwordSalt: string; passwordSha512: string } {
+  const passwordSalt = randomBytes(32).toString('hex');
+  const passwordSha512 = createHash('sha512').update(passwordSalt + password).digest('hex');
+  return { passwordSalt, passwordSha512 };
+}
+
 async function seed() {
   const orm = await MikroORM.init({
     driver: MongoDriver,
     clientUrl: process.env.MONGODB_URL ?? 'mongodb://root:password@localhost:27017/agitalsoft?authSource=admin',
     dbName: 'agitalsoft',
-    entities: [Product, ProductImage, ProductRating],
+    entities: [Product, ProductImage, ProductRating, User],
   });
 
   const em = orm.em.fork();
@@ -134,6 +160,21 @@ async function seed() {
 
   await em.persistAndFlush(products);
   console.log(`Seeded ${products.length} products.`);
+
+  const userCollection = em.getDriver().getConnection().getCollection<User>('user');
+  await userCollection.deleteMany({});
+
+  const users = USERS.map(({ name, birthDate, email, password }) =>
+    em.create(User, {
+      name,
+      birthDate: new Date(birthDate),
+      email,
+      ...hashPassword(password),
+    } as User),
+  );
+  await em.persistAndFlush(users);
+  console.log(`Seeded ${users.length} users.`);
+
   await orm.close();
 }
 

@@ -5,6 +5,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { MongoDriver } from '@mikro-orm/mongodb';
 import { join } from 'path';
 import { ProductModule } from './product/product.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ProductModule } from './product/product.module';
       entitiesTs: ['./src/**/*.entity.ts'],
     }),
     ProductModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

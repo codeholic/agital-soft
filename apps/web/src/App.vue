@@ -13,6 +13,9 @@
             class="w-full rounded-lg border-gray-300 shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
           />
         </form>
+        <div class="ml-auto shrink-0">
+          <LoginDropdown />
+        </div>
       </div>
     </header>
     <main class="max-w-7xl mx-auto px-4 py-8">
@@ -24,6 +27,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import LoginDropdown from './components/LoginDropdown.vue';
 
 const router = useRouter();
 const searchQuery = ref('');
