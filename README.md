@@ -54,6 +54,16 @@ cd apps/api
 pnpm run seed
 ```
 
+### Test users
+
+| Name            | Email                    | Password |
+|-----------------|--------------------------|----------|
+| Max Mustermann  | max@agital.online        | pass1    |
+| Anna Schmidt    | anna@agital.online       | pass2    |
+| Klaus Weber     | klaus@agital.online      | pass3    |
+| Maria Müller    | maria@agital.online      | pass4    |
+| Thomas Fischer  | thomas@agital.online     | pass5    |
+
 ## Stop infrastructure
 
 ```bash
