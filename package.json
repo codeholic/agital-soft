@@ -1,0 +1,10 @@
+{
+  "name": "agital-soft",
+  "private": true,
+  "scripts": {
+    "dev:api": "pnpm --filter @agital-soft/api dev",
+    "dev:web": "pnpm --filter @agital-soft/web dev",
+    "build:api": "pnpm --filter @agital-soft/api build",
+    "build:web": "pnpm --filter @agital-soft/web build"
+  }
+}
