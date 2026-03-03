@@ -5,6 +5,8 @@ import { ObjectId } from '@mikro-orm/mongodb';
 import { Review } from './entities/review.entity';
 import { Product } from '../product/entities/product.entity';
 import { User } from '../user/entities/user.entity';
+import { IConnection } from '../common/connections/types';
+import { PageInfo } from '../common/connections/dto/page-info.dto';
 
 @Injectable()
 export class ReviewService {
@@ -13,10 +15,34 @@ export class ReviewService {
     @InjectRepository(User) private readonly userRepo: EntityRepository<User>,
   ) {}
 
-  async findByProduct(productId: string, stars?: number): Promise<Review[]> {
-    const where: Record<string, unknown> = { productId };
-    if (stars !== undefined && stars !== null) where['stars'] = stars;
-    return this.reviewRepo.findAll({ where, orderBy: { createdAt: 'desc' } });
+  async findByProductConnection(
+    productId: string,
+    first = 20,
+    after?: string,
+  ): Promise<IConnection<Review>> {
+    const limit = first;
+    const offset = after
+      ? Number(Buffer.from(after, 'base64url').toString('ascii')) + 1
+      : 0;
+
+    const [items, total] = await this.reviewRepo.findAndCount(
+      { productId },
+      { orderBy: { createdAt: 'desc' }, limit, offset },
+    );
+
+    const edges = items.map((node, i) => ({
+      cursor: Buffer.from(String(offset + i)).toString('base64url'),
+      node,
+    }));
+
+    const pageInfo: PageInfo = {
+      startCursor: edges[0]?.cursor,
+      endCursor: edges[edges.length - 1]?.cursor,
+      hasNextPage: total > offset + limit,
+      hasPreviousPage: offset > 0,
+    };
+
+    return { edges, pageInfo, totalCount: total };
   }
 
   async addReview(
@@ -38,14 +64,17 @@ export class ReviewService {
       throw e;
     }
 
-    // Atomic rating update: all three fields in one pipeline operation
+    // Atomic rating update — $ifNull guards against missing fields in legacy documents
     const productCol = em.getDriver().getConnection().getCollection<Product>('product');
     await productCol.updateOne(
       { _id: new ObjectId(productId) },
       [{ $set: {
-        'rating.totalStars':    { $add: ['$rating.totalStars', stars] },
-        'rating.reviewCount':   { $add: ['$rating.reviewCount', 1] },
-        'rating.averageRating': { $divide: [{ $add: ['$rating.totalStars', stars] }, { $add: ['$rating.reviewCount', 1] }] },
+        'rating.totalStars':    { $add: [{ $ifNull: ['$rating.totalStars', 0] }, stars] },
+        'rating.reviewCount':   { $add: [{ $ifNull: ['$rating.reviewCount', 0] }, 1] },
+        'rating.averageRating': { $divide: [
+          { $add: [{ $ifNull: ['$rating.totalStars', 0] }, stars] },
+          { $add: [{ $ifNull: ['$rating.reviewCount', 0] }, 1] },
+        ]},
       }}],
     );
 

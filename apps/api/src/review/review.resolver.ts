@@ -3,6 +3,8 @@ import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ReviewService } from './review.service';
 import { Review } from './entities/review.entity';
+import { ReviewConnectionDto } from './dto/review-connection.dto';
+import { PaginationArgs } from '../common/connections/types';
 
 @Resolver()
 export class ReviewResolver {
@@ -11,12 +13,16 @@ export class ReviewResolver {
     private readonly jwtService: JwtService,
   ) {}
 
-  @Query(() => [Review])
+  @Query(() => ReviewConnectionDto)
   async reviews(
     @Args('productId', { type: () => ID }) productId: string,
-    @Args('stars', { type: () => Int, nullable: true }) stars?: number,
-  ): Promise<Review[]> {
-    return this.reviewService.findByProduct(productId, stars);
+    @Args() pagination: PaginationArgs,
+  ): Promise<ReviewConnectionDto> {
+    return this.reviewService.findByProductConnection(
+      productId,
+      pagination.first,
+      pagination.after,
+    ) as Promise<ReviewConnectionDto>;
   }
 
   @Mutation(() => Review)
