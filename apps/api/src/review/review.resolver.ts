@@ -1,30 +1,23 @@
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
+import { AbstractConnectionResolver } from '../common/connections/abstract-connection.resolver';
 import { ReviewService } from './review.service';
 import { Review } from './entities/review.entity';
 import { ReviewConnectionDto } from './dto/review-connection.dto';
-import { PaginationArgs } from '../common/connections/types';
+import { ReviewConnectionArgs } from './dto/review-connection.args';
+import { ReviewFilterInput } from './dto/review-filter.input';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 
 @Resolver()
-export class ReviewResolver {
-  constructor(private readonly reviewService: ReviewService) {}
+export class ReviewResolver extends AbstractConnectionResolver<Review, ReviewFilterInput, never> {
+  constructor(private readonly reviewService: ReviewService) {
+    super();
+  }
 
   @Query(() => ReviewConnectionDto)
-  async reviews(
-    @Args('productId', { type: () => ID }) productId: string,
-    @Args('stars', { type: () => Int, nullable: true }) stars: number | undefined,
-    @Args('userId', { type: () => ID, nullable: true }) userId: string | undefined,
-    @Args() pagination: PaginationArgs,
-  ): Promise<ReviewConnectionDto> {
-    return this.reviewService.findByProductConnection(
-      productId,
-      pagination.first,
-      pagination.after,
-      stars,
-      userId,
-    ) as Promise<ReviewConnectionDto>;
+  async reviews(@Args() args: ReviewConnectionArgs): Promise<ReviewConnectionDto> {
+    return this.resolveConnection(this.reviewService, args) as Promise<ReviewConnectionDto>;
   }
 
   @Mutation(() => Review)

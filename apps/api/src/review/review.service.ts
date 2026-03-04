@@ -2,53 +2,34 @@ import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/co
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/mongodb';
 import { ObjectId } from '@mikro-orm/mongodb';
+import { FilterQuery } from '@mikro-orm/core';
 import { Review } from './entities/review.entity';
 import { Product } from '../product/entities/product.entity';
 import { User } from '../user/entities/user.entity';
-import { IConnection } from '../common/connections/types';
-import { PageInfo } from '../common/connections/dto/page-info.dto';
+import { IConnectionArgs, IConnectionQuery, IConnectionService } from '../common/connections/types';
+import { ReviewFilterInput } from './dto/review-filter.input';
 
 @Injectable()
-export class ReviewService {
+export class ReviewService
+  implements IConnectionService<Review, ReviewFilterInput, never>
+{
   constructor(
     @InjectRepository(Review) private readonly reviewRepo: EntityRepository<Review>,
     @InjectRepository(User) private readonly userRepo: EntityRepository<User>,
   ) {}
 
-  async findByProductConnection(
-    productId: string,
-    first = 20,
-    after?: string,
-    stars?: number,
-    userId?: string,
-  ): Promise<IConnection<Review>> {
-    const limit = first;
-    const offset = after
-      ? Number(Buffer.from(after, 'base64url').toString('ascii')) + 1
-      : 0;
+  getRepository(): EntityRepository<Review> {
+    return this.reviewRepo;
+  }
 
-    const filter: Record<string, any> = { productId };
-    if (stars) filter.stars = stars;
-    if (userId) filter.userId = userId;
-
-    const [items, total] = await this.reviewRepo.findAndCount(
-      filter,
-      { orderBy: { createdAt: 'desc' }, limit, offset },
-    );
-
-    const edges = items.map((node, i) => ({
-      cursor: Buffer.from(String(offset + i)).toString('base64url'),
-      node,
-    }));
-
-    const pageInfo: PageInfo = {
-      startCursor: edges[0]?.cursor,
-      endCursor: edges[edges.length - 1]?.cursor,
-      hasNextPage: total > offset + limit,
-      hasPreviousPage: offset > 0,
-    };
-
-    return { edges, pageInfo, totalCount: total };
+  buildConnectionQuery(
+    args: IConnectionArgs<ReviewFilterInput, never>,
+  ): IConnectionQuery<Review> {
+    const { productId, stars, userId } = args.filter!;
+    const where: FilterQuery<Review> = { productId };
+    if (stars) where.stars = stars;
+    if (userId) where.userId = userId;
+    return { where, orderBy: { createdAt: 'desc' } };
   }
 
   async addReview(

@@ -235,12 +235,12 @@ const PRODUCT_DETAIL = gql`
 
 const REVIEWS_QUERY = gql`
   query ReviewsPage($productId: ID!, $loggedIn: Boolean!, $userId: ID, $first: Int, $stars: Int) {
-    myReview: reviews(productId: $productId, userId: $userId, first: 1) @include(if: $loggedIn) {
+    myReview: reviews(filter: { productId: $productId, userId: $userId }, first: 1) @include(if: $loggedIn) {
       edges {
         node { id userId name stars text createdAt }
       }
     }
-    reviews(productId: $productId, first: $first, stars: $stars) {
+    reviews(filter: { productId: $productId, stars: $stars }, first: $first) {
       totalCount
       pageInfo { hasNextPage endCursor }
       edges {
