@@ -3,7 +3,6 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/mongodb';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { FilterQuery } from '@mikro-orm/core';
-import { ClientSession } from 'mongodb';
 import { Review } from './entities/review.entity';
 import { Product } from '../product/entities/product.entity';
 import { User } from '../user/entities/user.entity';
@@ -50,7 +49,7 @@ export class ReviewService
         review = tem.create(Review, { productId, userId, name: user.name, stars, text, createdAt: new Date() });
         await tem.flush();
 
-        const session = tem.getTransactionContext() as ClientSession;
+        const session = tem.getTransactionContext();
         const productCol = tem.getDriver().getConnection().getCollection<Product>('product');
         await productCol.updateOne(
           { _id: new ObjectId(productId) },
