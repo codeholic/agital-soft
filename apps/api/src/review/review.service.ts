@@ -3,6 +3,7 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/mongodb';
 import { ObjectId } from '@mikro-orm/mongodb';
 import { FilterQuery } from '@mikro-orm/core';
+import { ClientSession } from 'mongodb';
 import { Review } from './entities/review.entity';
 import { Product } from '../product/entities/product.entity';
 import { User } from '../user/entities/user.entity';
@@ -42,29 +43,33 @@ export class ReviewService
     if (!user) throw new UnauthorizedException();
 
     const em = this.reviewRepo.getEntityManager();
-    const review = em.create(Review, { productId, userId, name: user.name, stars, text, createdAt: new Date() });
+    let review: Review;
 
     try {
-      await em.persistAndFlush(review);
+      await em.transactional(async (tem) => {
+        review = tem.create(Review, { productId, userId, name: user.name, stars, text, createdAt: new Date() });
+        await tem.flush();
+
+        const session = tem.getTransactionContext() as ClientSession;
+        const productCol = tem.getDriver().getConnection().getCollection<Product>('product');
+        await productCol.updateOne(
+          { _id: new ObjectId(productId) },
+          [{ $set: {
+            'rating.totalStars':    { $add: [{ $ifNull: ['$rating.totalStars', 0] }, stars] },
+            'rating.reviewCount':   { $add: [{ $ifNull: ['$rating.reviewCount', 0] }, 1] },
+            'rating.averageRating': { $divide: [
+              { $add: [{ $ifNull: ['$rating.totalStars', 0] }, stars] },
+              { $add: [{ $ifNull: ['$rating.reviewCount', 0] }, 1] },
+            ]},
+          }}],
+          { session },
+        );
+      });
     } catch (e: any) {
       if (e.code === 11000) throw new ConflictException('Sie haben dieses Produkt bereits bewertet');
       throw e;
     }
 
-    // Atomic rating update — $ifNull guards against missing fields in legacy documents
-    const productCol = em.getDriver().getConnection().getCollection<Product>('product');
-    await productCol.updateOne(
-      { _id: new ObjectId(productId) },
-      [{ $set: {
-        'rating.totalStars':    { $add: [{ $ifNull: ['$rating.totalStars', 0] }, stars] },
-        'rating.reviewCount':   { $add: [{ $ifNull: ['$rating.reviewCount', 0] }, 1] },
-        'rating.averageRating': { $divide: [
-          { $add: [{ $ifNull: ['$rating.totalStars', 0] }, stars] },
-          { $add: [{ $ifNull: ['$rating.reviewCount', 0] }, 1] },
-        ]},
-      }}],
-    );
-
-    return review;
+    return review!;
   }
 }

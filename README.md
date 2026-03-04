@@ -20,7 +20,7 @@ docker-compose up -d
 ```
 
 This starts:
-- **MongoDB** on `localhost:27017`
+- **MongoDB** on `localhost:27017` (single-node replica set, required for multi-document transactions)
 
 ## Start applications
 
