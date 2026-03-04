@@ -1,17 +1,15 @@
-import { Args, Context, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
 import { ReviewService } from './review.service';
 import { Review } from './entities/review.entity';
 import { ReviewConnectionDto } from './dto/review-connection.dto';
 import { PaginationArgs } from '../common/connections/types';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Resolver()
 export class ReviewResolver {
-  constructor(
-    private readonly reviewService: ReviewService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly reviewService: ReviewService) {}
 
   @Query(() => ReviewConnectionDto)
   async reviews(
@@ -30,19 +28,13 @@ export class ReviewResolver {
   }
 
   @Mutation(() => Review)
+  @UseGuards(JwtAuthGuard)
   async addReview(
     @Args('productId', { type: () => ID }) productId: string,
     @Args('stars', { type: () => Int }) stars: number,
     @Args('text') text: string,
-    @Context() ctx: any,
+    @CurrentUser() user: { sub: string },
   ): Promise<Review> {
-    const auth = ctx.req?.headers?.authorization as string | undefined;
-    if (!auth) throw new UnauthorizedException();
-    try {
-      const payload = this.jwtService.verify<{ sub: string }>(auth.replace('Bearer ', ''));
-      return this.reviewService.addReview(productId, payload.sub, stars, text);
-    } catch {
-      throw new UnauthorizedException();
-    }
+    return this.reviewService.addReview(productId, user.sub, stars, text);
   }
 }
