@@ -52,7 +52,7 @@ export class Product {
   inStock: boolean = true;
 
   @Field(() => ProductRating)
-  @Embedded(() => ProductRating)
+  @Embedded(() => ProductRating, { object: true })
   rating: ProductRating = new ProductRating();
 
   @Field()

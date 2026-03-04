@@ -218,7 +218,7 @@ const REVIEWS_QUERY = gql`
   }
 `;
 
-const { result, loading } = useQuery(PRODUCT_DETAIL, () => ({ id: props.id }));
+const { result, loading, refetch: refetchProduct } = useQuery(PRODUCT_DETAIL, () => ({ id: props.id }));
 const product = computed(() => result.value?.product);
 
 const { result: reviewsResult, loading: reviewsLoading, refetch: refetchReviews } = useQuery(
@@ -254,7 +254,7 @@ async function submitReview() {
   try {
     await addReview({ productId: props.id, stars: newStars.value, text: newText.value.trim() });
     submitted.value = true;
-    await refetchReviews();
+    await Promise.all([refetchReviews(), refetchProduct()]);
   } catch (e: any) {
     submitError.value = e?.graphQLErrors?.[0]?.message ?? 'Fehler beim Speichern.';
   } finally {
