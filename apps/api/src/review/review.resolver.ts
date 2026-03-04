@@ -16,12 +16,16 @@ export class ReviewResolver {
   @Query(() => ReviewConnectionDto)
   async reviews(
     @Args('productId', { type: () => ID }) productId: string,
+    @Args('stars', { type: () => Int, nullable: true }) stars: number | undefined,
+    @Args('userId', { type: () => ID, nullable: true }) userId: string | undefined,
     @Args() pagination: PaginationArgs,
   ): Promise<ReviewConnectionDto> {
     return this.reviewService.findByProductConnection(
       productId,
       pagination.first,
       pagination.after,
+      stars,
+      userId,
     ) as Promise<ReviewConnectionDto>;
   }
 

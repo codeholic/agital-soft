@@ -19,14 +19,20 @@ export class ReviewService {
     productId: string,
     first = 20,
     after?: string,
+    stars?: number,
+    userId?: string,
   ): Promise<IConnection<Review>> {
     const limit = first;
     const offset = after
       ? Number(Buffer.from(after, 'base64url').toString('ascii')) + 1
       : 0;
 
+    const filter: Record<string, any> = { productId };
+    if (stars) filter.stars = stars;
+    if (userId) filter.userId = userId;
+
     const [items, total] = await this.reviewRepo.findAndCount(
-      { productId },
+      filter,
       { orderBy: { createdAt: 'desc' }, limit, offset },
     );
 

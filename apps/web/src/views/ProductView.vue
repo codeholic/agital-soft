@@ -154,12 +154,32 @@
 
           <!-- Bewertungen (other reviews) -->
           <div>
-            <h2 class="font-semibold text-gray-900 mb-3">Bewertungen</h2>
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="font-semibold text-gray-900">Bewertungen</h2>
+              <div class="flex gap-1">
+                <button
+                  @click="starFilter = null"
+                  :class="starFilter === null
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                  class="px-2 py-1 rounded text-xs font-medium transition-colors"
+                >Alle</button>
+                <button
+                  v-for="s in [5,4,3,2,1]"
+                  :key="s"
+                  @click="starFilter = s"
+                  :class="starFilter === s
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                  class="px-2 py-1 rounded text-xs font-medium transition-colors"
+                >{{ s }} ★</button>
+              </div>
+            </div>
             <div v-if="reviewsLoading" class="text-gray-500 text-sm">Wird geladen...</div>
-            <div v-else-if="!otherReviews.length" class="text-gray-400 text-sm">Keine Bewertungen vorhanden.</div>
+            <div v-else-if="!filteredReviews.length" class="text-gray-400 text-sm">Keine Bewertungen vorhanden.</div>
             <div v-else class="flex flex-col gap-4">
               <div
-                v-for="review in otherReviews"
+                v-for="review in filteredReviews"
                 :key="review.id"
                 class="bg-gray-50 rounded-lg p-4 flex flex-col gap-1"
               >
@@ -207,8 +227,13 @@ const PRODUCT_DETAIL = gql`
 `;
 
 const REVIEWS_QUERY = gql`
-  query Reviews($productId: ID!, $first: Int, $after: String) {
-    reviews(productId: $productId, first: $first, after: $after) {
+  query ReviewsPage($productId: ID!, $loggedIn: Boolean!, $userId: ID, $first: Int, $stars: Int) {
+    myReview: reviews(productId: $productId, userId: $userId, first: 1) @include(if: $loggedIn) {
+      edges {
+        node { id userId name stars text createdAt }
+      }
+    }
+    reviews(productId: $productId, first: $first, stars: $stars) {
       totalCount
       pageInfo { hasNextPage endCursor }
       edges {
@@ -221,15 +246,24 @@ const REVIEWS_QUERY = gql`
 const { result, loading, refetch: refetchProduct } = useQuery(PRODUCT_DETAIL, () => ({ id: props.id }));
 const product = computed(() => result.value?.product);
 
+const starFilter = ref<number | null>(null);
+
 const { result: reviewsResult, loading: reviewsLoading, refetch: refetchReviews } = useQuery(
   REVIEWS_QUERY,
-  () => ({ productId: props.id, first: 100 }),
+  () => ({
+    productId: props.id,
+    loggedIn: isLoggedIn.value && !!user.value?.id,
+    userId: user.value?.id ?? null,
+    first: 100,
+    stars: starFilter.value ?? undefined,
+  }),
 );
-const reviews = computed(() =>
-  (reviewsResult.value?.reviews?.edges ?? []).map((e: any) => e.node),
+const myReview = computed(() => reviewsResult.value?.myReview?.edges?.[0]?.node ?? null);
+const filteredReviews = computed(() =>
+  (reviewsResult.value?.reviews?.edges ?? [])
+    .map((e: any) => e.node)
+    .filter((r: any) => r.userId !== user.value?.id),
 );
-const myReview = computed(() => reviews.value.find((r: any) => r.userId === user.value?.id));
-const otherReviews = computed(() => reviews.value.filter((r: any) => r.userId !== user.value?.id));
 
 // Add review form state
 const newStars = ref(0);

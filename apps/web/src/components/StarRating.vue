@@ -21,8 +21,8 @@ const props = defineProps<{
 
 const starStates = computed(() => {
   const frac = props.rating % 1;
-  const full = frac >= 0.8 ? Math.ceil(props.rating) : Math.floor(props.rating);
-  const half = frac >= 0.3 && frac < 0.8;
+  const full = frac >= 0.75 ? Math.ceil(props.rating) : Math.floor(props.rating);
+  const half = frac >= 0.25 && frac < 0.75;
   return Array.from({ length: 5 }, (_, i) => {
     if (i + 1 <= full) return 'full';
     if (i + 1 === full + 1 && half) return 'half';

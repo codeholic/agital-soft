@@ -15,10 +15,10 @@
       </div>
     </div>
     <div class="p-3 flex flex-col gap-1 flex-1">
-      <p class="text-xs text-gray-500 truncate">{{ product.version }}</p>
       <h3 class="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
         {{ product.name }}
       </h3>
+      <div class="text-xs text-gray-500">{{ product.version }}</div>
       <StarRating
         v-if="product.rating"
         :rating="product.rating.averageRating"
@@ -26,16 +26,16 @@
       />
       <div class="mt-auto pt-2 flex items-baseline gap-2">
         <span class="font-bold text-gray-900">{{ formatPrice(product.price) }}</span>
-        <span v-if="product.listPrice" class="text-xs text-gray-400 line-through">
+        <span
+          v-if="product.listPrice"
+          class="text-xs text-gray-400 line-through"
+        >
           {{ formatPrice(product.listPrice) }}
         </span>
+        <span v-if="!product.inStock" class="ml-auto text-xs text-nowrap text-red-500 font-medium">
+          Nicht vorrätig
+        </span>
       </div>
-      <span
-        v-if="!product.inStock"
-        class="text-xs text-red-500 font-medium"
-      >
-        Nicht vorrätig
-      </span>
     </div>
   </RouterLink>
 </template>
