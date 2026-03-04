@@ -27,10 +27,6 @@ export class Review {
 
   @Field()
   @Property()
-  name: string;
-
-  @Field()
-  @Property()
   text: string;
 
   @Field()

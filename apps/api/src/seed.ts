@@ -210,7 +210,7 @@ async function seed() {
   console.log(`Seeded ${users.length} users.`);
 
   // Reviews:
-  // products 0-39:  all 5 users
+  // products 0-39:  users [0-3] + one deleted user
   // products 40-59: last 3 users [2,3,4]
   // products 60-79: last 1 user  [4]
   // products 80-99: no reviews
@@ -220,11 +220,12 @@ async function seed() {
 
   const reviews: Review[] = [];
 
-  function addReview(product: Product, user: User, stars: number) {
+  const DELETED_USER_ID = '000000000000000000000000';
+
+  function addReview(product: Product, userId: string, stars: number) {
     const review = em.create(Review, {
       productId: product.id,
-      userId: user.id,
-      name: user.name,
+      userId,
       stars,
       text: pick(REVIEW_TEXTS[stars]),
       createdAt: randomDate(new Date('2023-06-01'), new Date('2026-03-01')),
@@ -237,13 +238,14 @@ async function seed() {
   }
 
   for (let i = 0; i < 40; i++) {
-    for (const user of users) addReview(products[i], user, randomStars());
+    for (const user of users.slice(0, 4)) addReview(products[i], user.id, randomStars());
+    addReview(products[i], DELETED_USER_ID, randomStars());
   }
   for (let i = 40; i < 60; i++) {
-    for (const user of users.slice(2)) addReview(products[i], user, randomStars());
+    for (const user of users.slice(2)) addReview(products[i], user.id, randomStars());
   }
   for (let i = 60; i < 80; i++) {
-    addReview(products[i], users[4], randomStars());
+    addReview(products[i], users[4].id, randomStars());
   }
 
   await em.persistAndFlush(reviews);

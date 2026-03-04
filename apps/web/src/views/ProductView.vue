@@ -106,7 +106,9 @@
             <!-- Already reviewed -->
             <div v-if="myReview" class="bg-yellow-50 rounded-lg p-4 flex flex-col gap-1">
               <div class="flex items-center justify-between">
-                <span class="font-medium text-gray-900 text-sm">{{ myReview.name }}</span>
+                <span class="font-medium text-sm text-gray-900">
+                  {{ myReview.user?.name }}
+                </span>
                 <span class="text-gray-400 text-xs">{{ formatDate(myReview.createdAt) }}</span>
               </div>
               <StarRating :rating="myReview.stars" />
@@ -184,7 +186,9 @@
                 class="bg-gray-50 rounded-lg p-4 flex flex-col gap-1"
               >
                 <div class="flex items-center justify-between">
-                  <span class="font-medium text-gray-900 text-sm">{{ review.name }}</span>
+                  <span class="font-medium text-sm" :class="review.user ? 'text-gray-900' : 'text-gray-500'">
+                    {{ review.user?.name ?? 'Ehemaliger Nutzer' }}
+                  </span>
                   <span class="text-gray-400 text-xs">{{ formatDate(review.createdAt) }}</span>
                 </div>
                 <StarRating :rating="review.stars" />
@@ -237,14 +241,14 @@ const REVIEWS_QUERY = gql`
   query ReviewsPage($productId: ID!, $loggedIn: Boolean!, $userId: ID, $first: Int, $stars: Int) {
     myReview: reviews(filter: { productId: $productId, userId: $userId }, first: 1) @include(if: $loggedIn) {
       edges {
-        node { id userId name stars text createdAt }
+        node { id userId user { id name } stars text createdAt }
       }
     }
     reviews(filter: { productId: $productId, stars: $stars }, first: $first) {
       totalCount
       pageInfo { hasNextPage endCursor }
       edges {
-        node { id userId name stars text createdAt }
+        node { id userId user { id name } stars text createdAt }
       }
     }
   }
@@ -265,6 +269,7 @@ const { result: reviewsResult, loading: reviewsLoading, refetch: refetchReviews 
     stars: starFilter.value ?? undefined,
   }),
 );
+
 const myReview = computed(() => reviewsResult.value?.myReview?.edges?.[0]?.node ?? null);
 const filteredReviews = computed(() =>
   (reviewsResult.value?.reviews?.edges ?? [])

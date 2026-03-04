@@ -2,27 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/mongodb';
 import { FilterQuery } from '@mikro-orm/core';
-import { ObjectId } from '@mikro-orm/mongodb';
 import { Product } from './entities/product.entity';
-import {
-  IConnectionArgs,
-  IConnectionQuery,
-  IConnectionService,
-} from '../common/connections/types';
+import { IConnectionArgs, IConnectionQuery, IConnectionService } from '../common/connections/types';
 import { ProductFilterInput } from './dto/product-filter.input';
 import { ProductSortInput } from './dto/product-sort.input';
+import { RelationService } from '../common/services/relation.service';
 
 @Injectable()
 export class ProductService
+  extends RelationService<Product>
   implements IConnectionService<Product, ProductFilterInput, ProductSortInput>
 {
-  constructor(
-    @InjectRepository(Product)
-    private readonly repo: EntityRepository<Product>,
-  ) {}
-
-  getRepository(): EntityRepository<Product> {
-    return this.repo;
+  constructor(@InjectRepository(Product) repo: EntityRepository<Product>) {
+    super(repo);
   }
 
   buildConnectionQuery(
@@ -62,7 +54,4 @@ export class ProductService
     };
   }
 
-  async findById(id: string): Promise<Product | null> {
-    return this.repo.findOne(new ObjectId(id));
-  }
 }

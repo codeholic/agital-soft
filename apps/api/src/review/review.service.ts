@@ -1,25 +1,20 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository } from '@mikro-orm/mongodb';
-import { ObjectId } from '@mikro-orm/mongodb';
+import { EntityRepository, ObjectId } from '@mikro-orm/mongodb';
 import { FilterQuery } from '@mikro-orm/core';
 import { Review } from './entities/review.entity';
 import { Product } from '../product/entities/product.entity';
-import { User } from '../user/entities/user.entity';
 import { IConnectionArgs, IConnectionQuery, IConnectionService } from '../common/connections/types';
 import { ReviewFilterInput } from './dto/review-filter.input';
+import { RelationService } from '../common/services/relation.service';
 
 @Injectable()
 export class ReviewService
+  extends RelationService<Review>
   implements IConnectionService<Review, ReviewFilterInput, never>
 {
-  constructor(
-    @InjectRepository(Review) private readonly reviewRepo: EntityRepository<Review>,
-    @InjectRepository(User) private readonly userRepo: EntityRepository<User>,
-  ) {}
-
-  getRepository(): EntityRepository<Review> {
-    return this.reviewRepo;
+  constructor(@InjectRepository(Review) repo: EntityRepository<Review>) {
+    super(repo);
   }
 
   buildConnectionQuery(
@@ -38,15 +33,12 @@ export class ReviewService
     stars: number,
     text: string,
   ): Promise<Review> {
-    const user = await this.userRepo.findOne(new ObjectId(userId));
-    if (!user) throw new UnauthorizedException();
-
-    const em = this.reviewRepo.getEntityManager();
+    const em = this.repo.getEntityManager();
     let review: Review;
 
     try {
       await em.transactional(async (tem) => {
-        review = tem.create(Review, { productId, userId, name: user.name, stars, text, createdAt: new Date() });
+        review = tem.create(Review, { productId, userId, stars, text, createdAt: new Date() });
         await tem.flush();
 
         const session = tem.getTransactionContext();
