@@ -31,7 +31,7 @@ const isProduction = process.env.NODE_ENV === 'production';
       driver: MongoDriver,
       clientUrl: process.env.MONGODB_URL,
       dbName: 'agitalsoft',
-      entities: ['./dist/**/*.entity.js'],
+      entities: [join(__dirname, '**/*.entity.js')],
       entitiesTs: ['./src/**/*.entity.ts'],
     }),
     ProductModule,
