@@ -5,6 +5,7 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "node apps/api/dist/main"
+    "startCommand": "node apps/api/dist/main",
+    "watchPatterns": ["apps/api/**", "apps/web/**", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "Dockerfile"]
   }
 }
