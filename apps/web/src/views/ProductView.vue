@@ -1,8 +1,8 @@
 <template>
   <div>
-    <RouterLink to="/" class="text-indigo-600 hover:underline text-sm mb-6 inline-block">
+    <button @click="goBack" class="text-indigo-600 hover:underline text-sm mb-6 inline-block">
       ← Zurück
-    </RouterLink>
+    </button>
 
     <div v-if="loading" class="text-gray-500">Wird geladen...</div>
     <div v-else-if="!result?.product" class="text-gray-500">Produkt nicht gefunden.</div>
@@ -200,6 +200,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useQuery, useMutation } from '@vue/apollo-composable';
 import { gql } from '@apollo/client/core';
 import StarRating from '../components/StarRating.vue';
@@ -207,7 +208,13 @@ import { useAuth } from '../composables/useAuth';
 
 const props = defineProps<{ id: string }>();
 
+const router = useRouter();
 const { isLoggedIn, user } = useAuth();
+
+function goBack() {
+  if (history.length > 1) router.back();
+  else router.push('/');
+}
 
 const PRODUCT_DETAIL = gql`
   query ProductDetail($id: ID!) {
